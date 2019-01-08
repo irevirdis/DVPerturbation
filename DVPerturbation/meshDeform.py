@@ -117,25 +117,28 @@ class MeshDeform(object):
         """ 
         sort_blade_X  = list()
         sort_blade_Y  = list()
+        sort_blade_I  = list()
 
         for i in range(len(coord)):
             for j in range(len(blade_id_storage)):
                 if coord[i,0] == blade_id_storage[j]:
+                    sort_blade_I.append(coord[i,0])
                     sort_blade_X.append(coord[i,1])
                     sort_blade_Y.append(coord[i,2])
-
-        #print 'the sorted X are:', sort_blade_X
-        #print 'is the length of X equal to 192?', len(sort_blade_X) # ok !
 
         """ PART 5:
             storage of the blade coordinates inside an external file
         """
+
         xx = np.array([sort_blade_X]).T
         yy = np.array([sort_blade_Y]).T
-        ii = np.array([blade_id_storage]).T
+        ii = np.array([sort_blade_I]).T
 
-        #print 'the final x is ', xx
-        #matrix = np.hstack((xx,yy,ii))
+        if float(yy[1,0]) < float(yy[0,0]):
+            xx = xx[::-1]
+            yy = yy[::-1]
+            ii = ii[::-1]
+
         matrix = np.hstack((ii,xx,yy))
 
         with open('sorted_blade.txt', 'w') as blade:
@@ -163,8 +166,6 @@ class MeshDeform(object):
         """
         mesh = self.ExtractSurface(surface)
         coordinates = np.matrix(mesh)
-        #coordinates = coordinates.astype(float)
-        #new_mesh = np.zeros(mesh.shape)
         new_mesh_0 = np.zeros(len(mesh))
         new_mesh_1 = np.zeros(len(mesh))
         new_mesh_2 = list()
@@ -182,13 +183,7 @@ class MeshDeform(object):
         else:
             angle = math.radians(rotate)
         
-        # 1) translate the old mesh
-        # 2) scale factor applied to all the coordinates
         for i in range(len(coordinates)):
-            #new_mesh[i,1] = (float(coordinates[i,1]) + float(displacement[0])) * scale_factor
-            #new_mesh[i,2] = (float(coordinates[i,2]) + float(displacement[1])) * scale_factor
-            #new_mesh[i,0] = (int(coordinates[i,0]))
-            #print 'added:',int(new_mesh[i,0])
             new_mesh_0[i] = (float(coordinates[i,1]) + float(displacement[0])) * scale_factor
             new_mesh_1[i] = (float(coordinates[i,2]) + float(displacement[1])) * scale_factor
             new_mesh_2.append( str(int(coordinates[i,0])))
@@ -311,6 +306,7 @@ class MeshDeform(object):
             b = np.matrix(bump_array)
  
         air = np.matrix(self.SortedBlade(srf))
+
         with open('bump.txt', 'w') as bw:
             bw.write(str(b))
         with open('bump.txt', 'r') as r :
@@ -323,7 +319,7 @@ class MeshDeform(object):
         os.system("cp DVPerturbation/newhickshenne.m .")
         os.system("./newhickshenne.m")
         os.system("rm newhickshenne.m")
-        os.system("rm bump_new.txt")
+        #os.system("rm bump_new.txt")
        
 
         """
@@ -479,7 +475,7 @@ class MeshDeform(object):
             os.system("SU2_DEF "+config_file)
 
 
-    def VerifyIntegrity(self, mesh_new=None, mesh_old=None):
+    def VerifyIntegrity(self, mesh_new=None, mesh_old=None, bump_matrix=None):
       """ This method has been written to check the maximum displacement of the nodes
           after the usage of the DEF module.
       """
@@ -535,13 +531,11 @@ class MeshDeform(object):
                Y.append( float(elem[1]))
                last = int(len(elem) - 1)
                Z.append( elem[last]) # here we are in two dimensions! so it will be be the INDEX array !
-        
-                                                                                                              
+                                                                                                                      
         x = np.array([X]).T
         y = np.array([Y]).T
         z = np.array([Z]).T
                                                                                                               
-        #print 'the final x is:', x                         #ok
         coord = np.matrix(np.hstack((z,x,y)))
         np.set_printoptions(threshold=np.nan)
 
@@ -561,16 +555,54 @@ class MeshDeform(object):
       # part 2: reading of the new mesh after the ApplyDEF method
       #------------------------------------------------------------
       array_of_mesh = np.array([mesh_old, mesh_new])
-      #print 'the length of arrau is:', len(array_of_mesh)
+
       for j in range(len(array_of_mesh)):
-          #print 'from for statement: the value of j is', j
           nodes_filter(array_of_mesh[j],j)
       #------------------------------------------------------------
       # part 3: comparison between meshes
       #------------------------------------------------------------
+        
+      # maximum bump entity
+      b     = np.matrix(bump_matrix)
+      max_b = 2*max(bump_matrix[:,1])
 
+      row_old = [x for x in open('mesh_verify0.txt').readlines()]
+      row_new = [y for y in open('mesh_verify1.txt').readlines()]
+      
+      mesh_corrected = np.zeros((len(row_new), 3))
+      list_integer = list()
+      
+      for i in range(len(row_old)):
+          old = row_old[i].split()
+          new = row_new[i].split()
+          difference_on_X = float(old[1]) - float(new[1])
+          difference_on_Y = float(old[2]) - float(new[2])
+          displacement = np.sqrt(difference_on_X**2 + difference_on_Y**2)
+          if (displacement > abs(max_b)):
+              list_integer.append(int(old[0]))
+              
+              mesh_corrected[i,0] = int(old[0])
+              mesh_corrected[i,1] = float(old[1])
+              mesh_corrected[i,2] = float(old[2])
+          else:
+              list_integer.append(int(new[0]))
+              mesh_corrected[i,0] = int(new[0])
+              mesh_corrected[i,1] = float(new[1])
+              mesh_corrected[i,2] = float(new[2])
 
+      a = np.array([list_integer]).T
+      b = np.array([mesh_corrected[:,1]]).T
+      c = np.array([mesh_corrected[:,2]]).T
+      to_export = np.hstack((a,b,c))
+      #print 'check if the 0 column is integer:', to_export
+      with open('correct2.txt', 'w') as corr:
+            corr.write(str(to_export))
+      with open('correct2.txt', 'r') as corr:
+        with open('corrected_mesh.txt', 'w') as cor2:
+            data = corr.read()
+            data = data.replace("[","")
+            data = data.replace("]","")
+            cor2.write(data)
+      os.system("rm correct2.txt")
 
-
-      #return coord
 
