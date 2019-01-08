@@ -1,9 +1,0 @@
-#!/bin/bash
-# write in a file the name of the config gfile that will be run
-#script = '
-FILE=torun.txt
-for actual in $(cut -d: -f1 $FILE); do
-echo $actual
-#SU2_DEF actual
-done
-#'
