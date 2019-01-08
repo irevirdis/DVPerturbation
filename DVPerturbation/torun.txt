@@ -1,3 +1,0 @@
-cfg1
-cfg2
-cfg3
