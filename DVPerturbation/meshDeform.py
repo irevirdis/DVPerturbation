@@ -585,7 +585,7 @@ class MeshDeform(object):
               mesh_corrected[i,1] = float(old[1])
               mesh_corrected[i,2] = float(old[2])
           else:
-              list_integer.append(int(new[0]))
+              list_integer.append(str(int(new[0])))
               mesh_corrected[i,0] = int(new[0])
               mesh_corrected[i,1] = float(new[1])
               mesh_corrected[i,2] = float(new[2])
@@ -593,16 +593,74 @@ class MeshDeform(object):
       a = np.array([list_integer]).T
       b = np.array([mesh_corrected[:,1]]).T
       c = np.array([mesh_corrected[:,2]]).T
-      to_export = np.hstack((a,b,c))
-      #print 'check if the 0 column is integer:', to_export
+
+      to_export = np.hstack((b,c,a))
+      #----------------------------------------------------------------------------------
+      #in the following lines only the coordinates of the corrected mesh will exported
       with open('correct2.txt', 'w') as corr:
             corr.write(str(to_export))
       with open('correct2.txt', 'r') as corr:
-        with open('corrected_mesh.txt', 'w') as cor2:
+        with open('corrected_mesh0.txt', 'w') as cor2:
             data = corr.read()
+            #print 'from line 605 : the type of the data which is reading is:', type(data)
             data = data.replace("[","")
             data = data.replace("]","")
+            data = data.replace("'","")
             cor2.write(data)
       os.system("rm correct2.txt")
+      
+      #----------------------------------------------------------------------------------
+      # in this part a new mesh, with su2 format will be created.
+
+      """ the aim of this section is to prepare a mesh file with a su2 format:
+          the input 'old_mesh' will provide two main bloks inside the final 
+          mesh; the input 'corrct' will provide the block between NPOIN marker
+          and NELEM marker.
+      """
+      mesh_old = self.mesh_name 
+      mesh_rows = [x for x in open(mesh_old).readlines()]
+      insert_correct = [y for y in open('corrected_mesh.txt').readlines()]
+
+      central_part = list()
+
+      for i in range(len(mesh_rows)):
+
+          if 'NPOIN' in mesh_rows[i]:
+              central_part.append(i)
+              check_columns = mesh_rows[i].split()
+              central_part.append(int(filter(str.isdigit, mesh_rows[i])))
+
+      first_of_central =  float(central_part[0])
+      last_of_central  =  float(central_part[1])
+
+      first_block  = []
+
+      for i in range(len(mesh_rows)):
+          """
+          this for statement end in the line containin the NPOIN marker:
+          for this reason the i index is set on (first_central +1)
+          """
+          if (i <= first_of_central):
+              with open('draft_to_full_mesh.txt', 'a') as draft:
+                  draft.write(mesh_rows[i])
+          if (i > int(first_of_central+1)) and (i <= int(last_of_central+2)):
+              with open('draft_to_full_mesh.txt', 'a') as draft:
+                  index = int(i-3 -last_of_central)
+                  draft.write(insert_correct[index])
+          if (i==int(last_of_central+2)):
+              with open('draft_to_full_mesh.txt', 'a') as draft:
+                  draft.write(str('\n '))
+          if (i > int(last_of_central+1)):
+              with open('draft_to_full_mesh.txt', 'a') as draft:
+                  draft.write(mesh_rows[i])
+
+      #print 'the first of the central is :', first_of_central
+      #print 'the last of the central is:', last_of_central
+
+      os.system("mv draft_to_full_mesh.txt full_corrected_mesh.txt")
+      os.system("dos2unix full_corrected_mesh.txt")
+      os.system("cp full_corrected_mesh.txt mesh_verified.su2")
+
+
 
 
