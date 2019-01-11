@@ -27,7 +27,6 @@ class MeshDeform(object):
         print '         Start calculation from ExtractSurface Method'
         filename = self.mesh_name
         surface = surface_name
-
         row = [x for x in open(filename).readlines()]
         limits = list()
         start_node  = list()
@@ -265,8 +264,8 @@ class MeshDeform(object):
 
 
         middle = len(sorted_blade) +1
-        sorted_blade1 = sorted_blade[leading_edge_index:middle]
-        sorted_blade2 = sorted_blade[0:(leading_edge_index)]
+        sorted_blade1 = sorted_blade[leading_edge_index:middle, :]
+        sorted_blade2 = sorted_blade[0:(leading_edge_index), :]
         blade_from_le = np.vstack((sorted_blade1, sorted_blade2))
 
         ##print 'length of sorted_blade:', len(sorted_blade)
@@ -646,13 +645,23 @@ class MeshDeform(object):
           if (i > int(first_of_central+1)) and (i <= int(last_of_central+2)):
               with open('draft_to_full_mesh.txt', 'a') as draft:
                   index = int(i-3 -last_of_central)
-                  draft.write(insert_correct[index])
+                  #--------------------------------------------------------------
+                  # 11 / 01/ 2019
+                  insert = insert_correct[index]
+                  #print 'the type of my insert is:', type(insert)
+                  insert_new = insert.lstrip()
+                  draft.write(insert_new)
+                  #--------------------------------------------------------------
+                  #draft.write(insert_correct[index])
+
           if (i==int(last_of_central+2)):
               with open('draft_to_full_mesh.txt', 'a') as draft:
-                  draft.write(str('\n '))
+                  draft.write(str('\n'))
           if (i > int(last_of_central+1)):
               with open('draft_to_full_mesh.txt', 'a') as draft:
-                  draft.write(mesh_rows[i])
+                  insert = mesh_rows[i]
+                  insert_new = insert.lstrip()
+                  draft.write(insert_new)
 
       #print 'the first of the central is :', first_of_central
       #print 'the last of the central is:', last_of_central
