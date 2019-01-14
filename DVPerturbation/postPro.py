@@ -106,7 +106,7 @@ class PostPro(object):
                     sorted_blade1 = blade[leading_edge_index:middle, :]
                     sorted_blade2 = blade[0:(leading_edge_index), :]
                     blade_from_le = np.vstack((sorted_blade1, sorted_blade2))                      
-                    print 'the sorted blade is :', blade_from_le
+                    #print 'the sorted blade is :', blade_from_le
         #           #
         #----------------------------------------------------------------------------------------------------#
         else: 
@@ -132,17 +132,23 @@ class PostPro(object):
         #print 'it should be the transpose:', bump_from_tmp
         #print 'and the shape is:', bump_from_tmp.shape
         max_array = list() # it contains the maximum values of each row inside the bump_from_tmp matrix
-        for i in range(len(bump_from_tmp)):
-            max_array.append(max(bump_from_tmp[i,:]))
+        # original ------------------------------------------
+        #for i in range(len(bump_from_tmp)):
+        #    max_array.append(max(bump_from_tmp[i,:]))
 
-        max_array = np.array(max_array)
+        #max_array = np.array(max_array)
+        # ---------------------------------------------------
+        bump_entity = [x for x in open('bump_new.txt').readlines() ]
         #print 'this is the array with all the maximum values:', max_array
         non_dim_bump = bump_from_tmp
         columns = len(rows_from_tmp)
         for i in range(len(bump_from_tmp)):
+            b_entity = bump_entity[i].split()
             for j in range(columns):
-                den = max_array[i]
-                #print 'this is inside  the for statement',den
+                #den = max_array[i]
+                den = float(b_entity[1])
+                #print 'this is inside  the for statement:line 150, it should be the bump amplitude',den
+                #print 'the type of the denominator is:', type(den)
                 if (den != 0.0) :
                     non_dim_bump[i,j] = non_dim_bump[i,j]/den
                 else:
