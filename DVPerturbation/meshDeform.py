@@ -599,7 +599,7 @@ class MeshDeform(object):
       with open('correct2.txt', 'w') as corr:
             corr.write(str(to_export))
       with open('correct2.txt', 'r') as corr:
-        with open('corrected_mesh0.txt', 'w') as cor2:
+        with open('corrected_mesh.txt', 'w') as cor2:
             data = corr.read()
             #print 'from line 605 : the type of the data which is reading is:', type(data)
             data = data.replace("[","")
