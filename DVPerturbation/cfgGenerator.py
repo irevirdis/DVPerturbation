@@ -2,10 +2,11 @@
 """
 import numpy as np
 import os
+from collectResults import CollectResults
 
 """     this class takes as inputs:
-	: param simulations   =   it an integer, is the number of the simulations that will be run.
-
+	: param bump   =   it an array which contains the bump entity (DV variable inside a config file)
+        : param pos    =   is an array which contains the position of each bump 
 	:RETURNS: configuration_file.cfg con numerosita' pari a simulations.
 """
 class CfgGenerator(object):
@@ -18,9 +19,11 @@ class CfgGenerator(object):
 		self.B = bump
 		print 'the input B is:', self.B
 		self.p = pos
-		print 'th positions are', self.p
+		print 'the positions are', self.p
 		#print 'from the init of cgf generator, the number of simulations will be:', self.n
                 print '----------------------------------------'
+                self.class_name = 'CfgGenerator'
+                os.system("mkdir "+str(self.class_name+"_OUTPUTs"))
 
 	#-------------------------------------------#
 	# METHODS
@@ -72,6 +75,15 @@ class CfgGenerator(object):
 				c.write('\nFIN_DIFF_STEP= '+'1E-6')                       
 				c.write('\nDV_VALUE_NEW= '+string_dvnew)
 				c.write('\nDV_VALUE= '+string_dvnew)
+                # part for saving the results inside a sub-directory.                
+                description='The file(s) config_i.cfg contain a runnable configuration file for simple 2D simulation.\n The Boundary Conditions are specified inside the lines 39-40 of the method WriteDraft.'
+                involved_outputs=list()
+                for i in range(self.n):
+                    file_ith = str('config'+str(i)+'.cfg') 
+                    involved_outputs.append(file_ith)
+                invoked_method = 'WriteDraft'
+                collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+                collection.Collect()
 
 	def RunSU2(self):
                 """ this method will run the simulations: DEF module will be called before the CFD one.
@@ -83,7 +95,20 @@ class CfgGenerator(object):
 			os.system('mv config'+str(i)+'.cfg CONFIG'+str(i)+'/')
 			os.system('cp mesh_RAE2822_turb.su2 CONFIG'+str(i)+'/')
 			os.system('cd CONFIG'+str(i)+'; SU2_DEF config'+str(i)+'.cfg >& output_def.txt; mv mesh_out.su2 mesh_RAE2822_turb.su2; SU2_CFD config'+str(i)+'.cfg >& output_cfd.txt')
-			
+		
+                # part for saving the results inside a sub-directory.                
+                description='The sub-folder(s) CONFIG contain all the results of the serial reun of a DEF module and CFD.\n The Boundary Conditions are specified inside the lines 39-40 of the method WriteDraft, and are the same listed into the configuration file inside every CONFIG sub-directory.'
+                involved_outputs=list()
+                for i in range(self.n):
+                    file_ith = str('-r CONFIG'+str(i)) 
+                    involved_outputs.append(file_ith)
+                    print 'the ith name is:', involved_outputs[i]
+                invoked_method = 'RunSU2'
+                collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+                collection.Collect()
+
+
+
         def RunADJ(self):
                 """ This method will run the simulatons with the adjoint operator
                 """
