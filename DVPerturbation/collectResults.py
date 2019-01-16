@@ -38,4 +38,30 @@ class CollectResults(object) :
         os.system("mv LOGFILE_README.txt "+sub_new+"/")
         os.system("mv "+sub_new+"/ "+new_dir+"/")
 
+        """ In the following lines is reported the list of command that should be given 
+            inside each class to generate the dedicated subfolder.
+            to add:
+
+            1) at the beginning of the class:
+            from collectResults import CollectResults
+            
+            2) inside the __init__ method:
+            self.class_name = 'class_name'
+            os.system("mkdir "+str(self.class_name+"_OUTPUTs"))
+            
+            3) at the end of each method:
+            # part for saving the results inside a sub-directory.                
+            description=' (...) '
+            involved_outputs=np.array(['file1.txt', ...,'filen,txt'])
+            # only if the output is recursive:
+            #for i in range(5):
+            #   file_ith = str('-r CONFIG'+str(i)) 
+            #   involved_outputs.append(file_ith)
+            #   print 'the ith name is:', involved_outputs[i]
+            invoked_method = 'SortedBlade'
+            collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+            collection.Collect()
+        """
+
+
 
