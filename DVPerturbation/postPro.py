@@ -2,17 +2,14 @@
 """
 import numpy as np
 import os
+from collectResults import CollectResults
 
-""" This class takes as inputs:
-    
-    : file_name = string, it specifies the file that will be processed
-    : aim       = string, it determines the specific aim of the calculations
-                  for example: 'gradients'
-"""
 class PostPro(object):
     """ ATTRIBUTES
     """
     def __init__(self):
+        self.class_name = 'PostPro'
+        os.system("mkdir "+str(self.class_name+"_OUTPUTs"))
         print 'Beginning of the Post Processing phase ..'
 
         
@@ -157,15 +154,18 @@ class PostPro(object):
         #print non_dim_bump
         product = np.matmul(non_dim_bump, np.array([blade_from_le[:,int(dimension[0])]]).T)
         print 'the gradients are: -see lines 153 of Gradient method, inside PostPro class-', product
-        #print 'the row of sensitivity is:', np.array([results[:,int(dimension[0])]]).T
-        #print 'the shape of the column is:', np.array([results[:,int(dimension[0])]]).T.shape
-
-        
-
-        
-
-
-
-
-
+        with open('gradients.txt', 'w') as g:
+            g.write(str(product))
+        #----
+        # part for saving the results inside a sub-directory.
+        description='The output of the method Gradient is the array with the calculation of the gradients in every fixed control point. The positions of these later are specified inside the file bump_new.txt (first columns) while the entity of the bump is written along the second column; the positions are referred to a non-dimensional curvilinear coordinate, calculated along a surface.'
+        involved_outputs=np.array(['gradients.txt'])
+        # only if the output is recursive:
+        #for i in range(5):
+        #   file_ith = str('-r CONFIG'+str(i))
+        #   involved_outputs.append(file_ith)
+        #   print 'the ith name is:', involved_outputs[i]
+        invoked_method = 'Gradients'
+        collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+        collection.Collect()
 
