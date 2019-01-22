@@ -3,6 +3,7 @@
 import numpy as np
 import os
 import math
+from collectResults import CollectResults
 
 """ This class takes as inputs:
     : param mesh_name = it is a string that will points the mesh file.
@@ -14,6 +15,8 @@ class MeshDeform(object):
     
     def __init__(self, mesh_name):
         self.mesh_name = mesh_name
+        self.class_name = 'MeshDeform'
+        os.system("mkdir "+str(self.class_name+"_OUTPUTs"))
     
     # methods
     def ExtractSurface(self, surface_name):
@@ -34,7 +37,7 @@ class MeshDeform(object):
         X = list()
         Y = list()
         Z = list()
-        I = list()
+	I = list()
         start_blade_index = list()
         number_blade      = list()
         blade_id_storage  = list()
@@ -100,14 +103,14 @@ class MeshDeform(object):
                elem = row[j].split()
                X.append( elem[0])
                Y.append( elem[1])
-               Z.append( elem[2])
+	       Z.append( elem[2])
                last = int(len(elem) - 1)
                I.append( elem[last]) # here we are in two dimensions! so it will be be the INDEX array !
 
         x = np.array([X]).T
         y = np.array([Y]).T
         z = np.array([Z]).T
-        i = np.array([I]).T
+	i = np.array([I]).T
 
         #print 'the final x is:', x                         #ok
         coord = np.matrix(np.hstack((i,x,y,z)))
@@ -119,8 +122,8 @@ class MeshDeform(object):
         """ 
         sort_blade_X  = list()
         sort_blade_Y  = list()
-        sort_blade_Z  = list()
         sort_blade_I  = list()
+	sort_blade_Z  = list()
 
         for i in range(len(coord)):
             for j in range(len(blade_id_storage)):
@@ -128,22 +131,21 @@ class MeshDeform(object):
                     sort_blade_I.append(coord[i,0])
                     sort_blade_X.append(coord[i,1])
                     sort_blade_Y.append(coord[i,2])
-                    sort_blade_Z.append(coord[i,3])
-        
+		    sort_blade_Z.append(coord[i,3])
+
         """ PART 5:
             storage of the blade coordinates inside an external file
         """
-        
+
         xx = np.array([sort_blade_X]).T
         yy = np.array([sort_blade_Y]).T
-        zz = np.array([sort_blade_Z]).T
+	zz = np.array([sort_blede_Z]).T
         ii = np.array([sort_blade_I]).T
-        
-        #if float(yy[1,0]) < float(yy[0,0]):
-            #xx = xx[::-1]
-            #yy = yy[::-1]
-            #zz = zz[::-1]
-            #ii = ii[::-1]
+
+        if float(yy[1,0]) < float(yy[0,0]):
+            xx = xx[::-1]
+            yy = yy[::-1]
+            ii = ii[::-1]
 
         matrix = np.hstack((ii,xx,yy,zz))
 
@@ -159,7 +161,20 @@ class MeshDeform(object):
                 w.write(data)
         os.system('rm sorted_blade.txt')
         print '--------------------------------------------------------------'
+        
+
+        # part for saving the results inside a sub-directory.                
+        description=' The output of the method is the file blade_points.txt which contains the coordinate of the blade, with the same order specified inside the original mesh file with SU2 format.'
+        involved_outputs=np.array(['blade_points.txt'])
+        #for i in range(5):
+        #file_ith = str('-r CONFIG'+str(i)) 
+        #involved_outputs.append(file_ith)
+        #print 'the ith name is:', involved_outputs[i]
+        invoked_method = 'ExtractSurface'
+        collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+        collection.Collect()
         return matrix
+
 
     def TransformMesh(self, surface, scale=None, translate=None, rotate=None):
         """ This method has been written to transform the mesh:
@@ -218,7 +233,21 @@ class MeshDeform(object):
                 blade.write(data)
         os.system('rm transf_mesh.txt')
             
+        
+
+        # part for saving the results inside a sub-directory.                
+        description=' The output of the method is a file transformed_mesh.txt, which contains only the coordiantes of the blade. after a rotation, translation and a scale action; if the parameter for this three actions are not given, the default calculation is rotation of 0 degree, translation of (0,0) and scale of 1.0; the angle of rotation should be expressed with degree; the translation is expressed with the coordinates (X,Y) of the displacement and the scale is a constant factor for resizing the blade.)'
+        involved_outputs=np.array(['transormed_mesh.txt'])
+        #for i in range(5):
+        #file_ith = str('-r CONFIG'+str(i)) 
+        #involved_outputs.append(file_ith)
+        #print 'the ith name is:', involved_outputs[i]
+        invoked_method = 'TransformMesh'
+        collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+        collection.Collect()
         return new_mesh
+
+
 
     def SortedBlade(self, surface):
         """ This method has been written to associate a curvilinear coordinate to each point of the blade surface.
@@ -232,16 +261,17 @@ class MeshDeform(object):
         distance_index = list()
         distance_array = list()
         # 1 ) find the leading edge: the geometrical origin of the axis;
-        #x = np.array(blade[:,1])
+        x = np.array(blade[:,1])
         y = np.array(blade[:,2])
-        z = np.array(blade[:,3])
-        #x = (x.astype(np.float))
+	z = np.array(blade[:,3])	
+
+        x = (x.astype(np.float))
         y = (y.astype(np.float))
-        z = (z.astype(np.float))
+	z = (z.astype(np.float))
 
         #minimum_x = float(min(x))
         minimum_y = float(min(y))
-        minimum_z = float(min(z))
+	minimum_z = float(min(z))
         #print 'the minimum values are:', minimum_x, minimum_y
         for i in range(len(blade)):
             #actual_x = np.array(blade[i,1])
@@ -273,7 +303,8 @@ class MeshDeform(object):
              
         x_ref = float(blade[leading_edge_index, 1])
         y_ref = float(blade[leading_edge_index, 2])
-        z_ref = float(blade[leading_edge_index, 3])
+	z_ref = float(blade[leading_edge_index, 3])
+
 
         middle = len(sorted_blade) +1
         sorted_blade1 = sorted_blade[leading_edge_index:middle, :]
@@ -297,7 +328,20 @@ class MeshDeform(object):
                 b.write(data)
         os.system("rm blade_from_le_0.txt")
 
+        
+        # part for saving the results inside a sub-directory.                
+        description=' The putput of the method is a file blade_from_le.txt, which contains only the coordiantes of the blade, sorted by the leading edge point (here the hypothesis is that the leading edge is on the point with minimum value of X)'
+        involved_outputs=np.array(['blade_from_le.txt'])
+        #for i in range(5):
+        #file_ith = str('-r CONFIG'+str(i)) 
+        #involved_outputs.append(file_ith)
+        #print 'the ith name is:', involved_outputs[i]
+        invoked_method = 'SortedBlade'
+        collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+        collection.Collect()
         return blade_from_le
+
+
     
     def ApplyBump(self, bump_array=None, surface=None):
         """ The aim of this method is to modify the blade geometry:
@@ -331,6 +375,8 @@ class MeshDeform(object):
         os.system("cp DVPerturbation/newhickshenne.m .")
         os.system("./newhickshenne.m")
         os.system("rm newhickshenne.m")
+        #os.system("rm bump_new.txt")
+       
 
         """
         # air contains the blade coordinates, sorted from the geometrical leading edge.
@@ -475,6 +521,17 @@ class MeshDeform(object):
         return tmp
         """
         #print 'end from applybump'
+        # part for saving the results inside a sub-directory.                
+        description='The output of this method is represented by the set of files bump_new.txt (which contains the matrix of applied bumps) and the files TMP.dat (the complete set of coordinates, applied bump and non-dimensional curvilinear coordinate) and surface_positions.dat (which contains the new coordinates X,Y of the blade surface)'
+        involved_outputs= np.array(['TMP.dat', 'surface_positions.dat'])   #list()
+        #for i in range(2):
+        #file_ith = str('-r CONFIG'+str(i)) 
+        #involved_outputs.append(file_ith)
+        #print 'the ith name is:', involved_outputs[i]
+        invoked_method = 'ApplyBump'
+        collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+        collection.Collect()
+
 
     def ApplyDEF(self, config_file=None):
         """ this method aims to apply the DEF module on the original mesh 
@@ -483,6 +540,17 @@ class MeshDeform(object):
             print 'from ApplyDEF method int omeshDeform class: the name of the configuration file MUST BE GIVEN'
         else:
             os.system("SU2_DEF "+config_file)
+
+        # part for saving the results inside a sub-directory.                
+        description='The output is the new mesh coordinates, after the application of the DEF module. The output is a .su2 mesh'
+        involved_outputs= np.array(['mesh_out.su2']) #list()
+        #for i in range(1):
+        #file_ith = str('-r CONFIG'+str(i)) 
+        #involved_outputs.append(file_ith)
+        #print 'the ith name is:', involved_outputs[i]
+        invoked_method = 'ApplyDEF'
+        collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+        collection.Collect()
 
 
     def VerifyIntegrity(self, mesh_new=None, mesh_old=None, bump_matrix=None):
@@ -531,9 +599,9 @@ class MeshDeform(object):
         #print 'cast operation over index:', indx
         start = limits[indx]
                                                                                                               
-        print 'starting mesh reading from line number (vim index):', start+1
+        print 'the mesh will be read for indexes bigger than (vim index)', start+1
         print 'limits:', limits
-        print 'finishing mesh reading at line number (vim index):', (limits[2]+2)
+        print 'the last line (index of vim ) will be smaller than:', (limits[2]+2)
         for j in range(len(row)):    
             if (j > start) and (j < (limits[2]+1)):
                elem = row[j].split()
@@ -680,7 +748,15 @@ class MeshDeform(object):
       os.system("mv draft_to_full_mesh.txt full_corrected_mesh.txt")
       os.system("dos2unix full_corrected_mesh.txt")
       os.system("cp full_corrected_mesh.txt mesh_verified.su2")
-      print '\n'
-      print '#---------------------------- Exit Success - MeshDeform Class ----------------------------#'
-      print '\n'
+
+      # part for saving the results inside a sub-directory.                
+      description='The output have been writen to check the maximum displacement of the nodes inside a mesh after the application of the DEF module.\n The file mesh_verify0.txt contains only the coordinates of the specified surface of the original blade; the file mesh_verify1.txt contains the coordinates of the blade surface after the application of the DEF module;\n the file corrected_mesh and full_corrected mesh.txt contain the new coordinates of  all the nodes (not only the blade) after the check of the maximum displacement (2*bump_entity); mesh_verified.su2 can be used for a simulation.'
+      involved_outputs=np.array(['mesh_verify0.txt', 'mesh_verify1.txt', 'full_corrected_mesh.txt', 'mesh_verified.su2', 'corrected_mesh.txt'])
+      #for i in range(5):
+      #file_ith = str('-r CONFIG'+str(i)) 
+      #involved_outputs.append(file_ith)
+      #print 'the ith name is:', involved_outputs[i]
+      invoked_method = 'VerifyIntegrity'
+      collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
+      collection.Collect()
 
