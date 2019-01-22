@@ -37,6 +37,7 @@ class MeshDeform(object):
         X = list()
         Y = list()
         Z = list()
+	I = list()
         start_blade_index = list()
         number_blade      = list()
         blade_id_storage  = list()
@@ -102,15 +103,17 @@ class MeshDeform(object):
                elem = row[j].split()
                X.append( elem[0])
                Y.append( elem[1])
+	       Z.append( elem[2])
                last = int(len(elem) - 1)
-               Z.append( elem[last]) # here we are in two dimensions! so it will be be the INDEX array !
+               I.append( elem[last]) # here we are in two dimensions! so it will be be the INDEX array !
 
         x = np.array([X]).T
         y = np.array([Y]).T
         z = np.array([Z]).T
+	i = np.array([I]).T
 
         #print 'the final x is:', x                         #ok
-        coord = np.matrix(np.hstack((z,x,y)))
+        coord = np.matrix(np.hstack((i,x,y,z)))
         #print 'after stack:', coord                        #ok
         #print 'the size of coordinates is:', (coord.shape) #ok
 
@@ -120,6 +123,7 @@ class MeshDeform(object):
         sort_blade_X  = list()
         sort_blade_Y  = list()
         sort_blade_I  = list()
+	sort_blade_Z  = list()
 
         for i in range(len(coord)):
             for j in range(len(blade_id_storage)):
@@ -127,6 +131,7 @@ class MeshDeform(object):
                     sort_blade_I.append(coord[i,0])
                     sort_blade_X.append(coord[i,1])
                     sort_blade_Y.append(coord[i,2])
+		    sort_blade_Z.append(coord[i,3])
 
         """ PART 5:
             storage of the blade coordinates inside an external file
@@ -134,6 +139,7 @@ class MeshDeform(object):
 
         xx = np.array([sort_blade_X]).T
         yy = np.array([sort_blade_Y]).T
+	zz = np.array([sort_blede_Z]).T
         ii = np.array([sort_blade_I]).T
 
         if float(yy[1,0]) < float(yy[0,0]):
@@ -141,7 +147,7 @@ class MeshDeform(object):
             yy = yy[::-1]
             ii = ii[::-1]
 
-        matrix = np.hstack((ii,xx,yy))
+        matrix = np.hstack((ii,xx,yy,zz))
 
         with open('sorted_blade.txt', 'w') as blade:
             blade.write(str(matrix))
@@ -257,21 +263,27 @@ class MeshDeform(object):
         # 1 ) find the leading edge: the geometrical origin of the axis;
         x = np.array(blade[:,1])
         y = np.array(blade[:,2])
+	z = np.array(blade[:,3])	
+
         x = (x.astype(np.float))
         y = (y.astype(np.float))
+	z = (z.astype(np.float))
 
-        minimum_x = float(min(x))
+        #minimum_x = float(min(x))
         minimum_y = float(min(y))
+	minimum_z = float(min(z))
         #print 'the minimum values are:', minimum_x, minimum_y
         for i in range(len(blade)):
-            actual_x = np.array(blade[i,1])
-            actual_x = float(actual_x.astype(np.float))
+            #actual_x = np.array(blade[i,1])
+            #actual_x = float(actual_x.astype(np.float))
             actual_y = np.array(blade[i,2])
             actual_y = float(actual_y.astype(np.float))
+            actual_z = np.array(blade[i,3])
+            actual_z = float(actual_z.astype(np.float))
             #print 'type of element inside blade:', type(actual_x), 'the value is:', actual_x
             #print 'while the checking type is:', type(minimum_x), 'the value is:', minimum_x
 
-            if (actual_x == minimum_x): 
+            if (actual_z == minimum_z): 
                 distance_index.append(i)
                 #sorted_blade.append(blade[i,0:2])
             #if (actual_y == minimum_y ):
@@ -291,6 +303,7 @@ class MeshDeform(object):
              
         x_ref = float(blade[leading_edge_index, 1])
         y_ref = float(blade[leading_edge_index, 2])
+	z_ref = float(blade[leading_edge_index, 3])
 
 
         middle = len(sorted_blade) +1
@@ -299,6 +312,7 @@ class MeshDeform(object):
         blade_from_le = np.vstack((sorted_blade1, sorted_blade2))
 
         ##print 'length of sorted_blade:', len(sorted_blade)
+        np.set_printoptions(threshold=np.nan)
         with open('blade_from_le_0.txt', 'w') as b :
             b.write(str(blade_from_le))
         with open('blade_from_le_0.txt', 'r') as r:
