@@ -4,6 +4,7 @@ import numpy as np
 import os
 import math
 from collectResults import CollectResults
+from decimal import Decimal
 
 """ This class takes as inputs:
     : param mesh_name = it is a string that will points the mesh file.
@@ -64,10 +65,21 @@ class MeshDeform(object):
             storage of the blade indexes:
         """
         for j in range(len(row)):
-            if (j > start) and (j < end ):
-                elem = row[j].split()
-                blade_id_storage.append(elem[1])
-
+            problem_dimension = len(row[j].split())
+            #print 'this is the dimension of the problem: from line 68 of class meshDeform',problem_dimension
+            if (j > start) and (j < end ) :
+                if (problem_dimension==3):
+                    elem = row[j].split()
+                    blade_id_storage.append(elem[1])
+                else:
+                    elem = row[j].split()
+                    for k in range(int(len(elem)-1)):
+                    #print 'from line 73, the dimension is greater than 2D!'
+                    # filter part: into blade_id_storage we do the stack of the indexes without repetions    
+                        if elem[int(k+1)] not in blade_id_storage:
+                            #print 'i am doing the storage of this element:', elem[int(k+1)]
+                            blade_id_storage.append(elem[int(k+1)])
+        np.set_printoptions(threshold=np.nan)
         """ PART 3  
             check of mesh nodes (total number!)
         """
@@ -125,13 +137,24 @@ class MeshDeform(object):
         sort_blade_I  = list()
 	sort_blade_Z  = list()
 
-        for i in range(len(coord)):
-            for j in range(len(blade_id_storage)):
-                if coord[i,0] == blade_id_storage[j]:
-                    sort_blade_I.append(coord[i,0])
-                    sort_blade_X.append(coord[i,1])
-                    sort_blade_Y.append(coord[i,2])
-		    sort_blade_Z.append(coord[i,3])
+        for j in range(len(blade_id_storage)):
+            print blade_id_storage[j]
+            print 'coords', coord[int(blade_id_storage[j]),0], blade_id_storage[j]
+            nindex=int(blade_id_storage[j])-1
+            if (coord[nindex,0] == blade_id_storage[j]):
+                sort_blade_I.append(coord[nindex,0])
+                sort_blade_X.append(round(Decimal(coord[nindex,1]),6))
+                sort_blade_Y.append(round(Decimal(coord[nindex,2]),6))
+                sort_blade_Z.append(round(Decimal(coord[nindex,3]),6))
+            else:
+                print 'I am inside this'
+                for i in range(len(coord)):
+                    if coord[i,0] == blade_id_storage[j]:
+                        sort_blade_I.append(coord[i,0])
+                        sort_blade_X.append(round(Decimal(coord[i,1]),6))
+                        sort_blade_Y.append(round(Decimal(coord[i,2]),6))
+		        sort_blade_Z.append(round(Decimal(coord[i,3]),6))
+
 
         """ PART 5:
             storage of the blade coordinates inside an external file
@@ -139,13 +162,14 @@ class MeshDeform(object):
 
         xx = np.array([sort_blade_X]).T
         yy = np.array([sort_blade_Y]).T
-	zz = np.array([sort_blede_Z]).T
+	zz = np.array([sort_blade_Z]).T
         ii = np.array([sort_blade_I]).T
-
-        if float(yy[1,0]) < float(yy[0,0]):
-            xx = xx[::-1]
-            yy = yy[::-1]
-            ii = ii[::-1]
+        #--------------------------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # to be implemented only for 2D cases!
+        #if float(yy[1,0]) < float(yy[0,0]):
+        #    xx = xx[::-1]
+        #    yy = yy[::-1]
+        #    ii = ii[::-1]
 
         matrix = np.hstack((ii,xx,yy,zz))
 
