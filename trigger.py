@@ -51,28 +51,40 @@ obj.Calc()
 
 
 # test of the first method inside meshDeform
-#obj = MeshDeform('mesh_stator.su2') # instance ok
-obj = MeshDeform('mesh_RAE2822_turb.su2')
-#matrix = obj.ExtractSurface('airfoil') # ok
+##obj = MeshDeform('mesh_stator.su2') # instance ok
+#obj = MeshDeform('mesh_RAE2822_turb.su2')
+#matrix = obj.ExtractSurface('AIRFOIL') # ok
+
+#obj = MeshDeform('mesh_ONERAM6_turb_tets.su2')
+#matrix = obj.ExtractSurface('wing')
+
 #obj.TransformMesh('AIRFOIL', translate = [0.2, 0.02])
 #matrix = obj.SortedBlade('AIRFOIL')
 #print matrix
 #b = [[3,9],[0.001, 0.001]]
 #obj.ApplyBump(surface='AIRFOIL', bump_array= b)
-#b = np.matrix([[0.33, 0.01],
-#               [0.78, 0.01]])
-#print 'the matrix of bumps is:', b #ok
-#print 'the element inside the matrix is:', b[1,0],'should be 0.78' #ok
-#res = obj.ApplyBump(surface='AIRFOIL', bump_array=b)
-#print 'the size is:', res.shape
 
+#b = np.matrix([[0.10, 0.0000],
+#               [0.20, 0.0000],
+#               [0.30, 0.0001],
+#               [0.40, 0.0000]])
+#obj.ApplyBump(surface='AIRFOIL', bump_array= b)
 
 # test of the DEF application:
 #obj.ApplyDEF(config_file='baseline.cfg')
+#obj.VerifyIntegrity(mesh_old='mesh_RAE2822_turb.su2', mesh_new='mesh_out.su2', bump_matrix=b)
 
 
-obj.VerifyIntegrity(mesh_old='mesh_RAE2822_turb.su2', mesh_new='mesh_out.su2')
+# part to test the PostPro class:
+#obj = PostPro()
+#obj.Gradient(file_name='surface_sens.dat')
 
+#obj = SetParam()
+#obj.WriteCfg()
+
+
+# test of hybrid mesh
+obj = HybridSlicer(mesh='mesh_ONERAM6_turb_tets.su2', surface='wing')
 
 
 
