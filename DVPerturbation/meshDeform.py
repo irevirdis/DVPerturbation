@@ -140,7 +140,7 @@ class MeshDeform(object):
         for j in range(len(blade_id_storage)):
             print blade_id_storage[j]
             print 'coords', coord[int(blade_id_storage[j]),0], blade_id_storage[j]
-            nindex=int(blade_id_storage[j])-1
+            nindex=int(blade_id_storage[j])#-1
             if (coord[nindex,0] == blade_id_storage[j]):
                 sort_blade_I.append(coord[nindex,0])
                 sort_blade_X.append(round(Decimal(coord[nindex,1]),6))
