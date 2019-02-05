@@ -398,7 +398,7 @@ class MeshDeform(object):
         os.system("rm bump.txt")
         os.system("cp DVPerturbation/newhickshenne.m .")
         os.system("./newhickshenne.m")
-        os.system("rm newhickshenne.m")
+        #os.system("rm newhickshenne.m")
         #os.system("rm bump_new.txt")
        
 
