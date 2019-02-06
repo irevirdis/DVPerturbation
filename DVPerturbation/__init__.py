@@ -8,3 +8,5 @@ from postPro import PostPro
 from collectResults import CollectResults
 from setParam import SetParam
 from hybridSlicer import HybridSlicer
+from profile import Profile
+
