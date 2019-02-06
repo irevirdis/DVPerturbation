@@ -99,6 +99,12 @@ class Profile(object):
                 b.write(data)
         os.system("rm blade_from_le_0.txt")
 
+        print blade_from_le[1,1], blade_from_le[0,1]
+
+        if float(blade_from_le[1,1]) < float(blade_from_le[0,1]):
+            blade_from_le = blade_from_le[::-1]
+            indices_from_le = indices_from_le[::-1]
+ 
         
         # part for saving the results inside a sub-directory.                
         description=' The putput of the method is a file blade_from_le.txt, which contains only the coordiantes of the blade, sorted by the leading edge point (here the hypothesis is that the leading edge is on the point with minimum value of X)'
@@ -129,47 +135,45 @@ class Profile(object):
  
         self.SortProfile()
 
-        with open('bump.txt', 'w') as bw:
-            bw.write(str(b))
-        with open('bump.txt', 'r') as r :
-            with open('bump_new.txt', 'w') as new:
-                data = r.read()
-                data = data.replace("[", "")
-                data = data.replace("]", "")
-                new.write(str(data))
-        os.system("rm bump.txt")
+        #with open('bump.txt', 'w') as bw:
+        #    bw.write(str(b))
+        #with open('bump.txt', 'r') as r :
+        #    with open('bump_new.txt', 'w') as new:
+        #        data = r.read()
+        #        data = data.replace("[", "")
+        #        data = data.replace("]", "")
+        #        new.write(str(data))
+        #os.system("rm bump.txt")
         #os.system("cp DVPerturbation/newhickshenne.m .")
-        os.system("./newhickshenne.m")
+        #os.system("./newhickshenne.m")
         #os.system("rm newhickshenne.m")
         #os.system("rm bump_new.txt")
-       
-
-        """
-        # air contains the blade coordinates, sorted from the geometrical leading edge.
-        air = np.matrix(self.SortedBlade(srf))
-        n   = len(air)
+        
+        # sorted_points contains the blade coordinates, sorted from the geometrical leading edge.
+        n   = len(self.sorted_points)
         # into the variable sc it will be stored the number of the rows inside the bump matrix
         sc  = len(b)
         # t2 is one the parameters to determine the shape of the HicksHenne curve.
         t2  = 6.65
         
-        columns = int(air.size/len(air))  # how many columns are there inside the air matrix?
-        c = int(columns + (7 + sc))
-        tmp = np.zeros((len(air),c))      # temporary results matrix
+        columns = int((self.sorted_points.size)/len(self.sorted_points))  # how many columns are there inside the sorted_points matrix?
+        c = int(columns + (8 + sc))
+        tmp = np.zeros((len(self.sorted_points),c))      # temporary results matrix
 
-        for i in range(n-1):
-            tmp[i,0] = int(air[i,0])
-            tmp[i,1] = air[i,1]
-            tmp[i,2] = air[i,2]
+        for i in range(n):
+            tmp[i,0] = int(self.sorted_indices[i])
+            tmp[i,1] = self.sorted_points[i,0]
+            tmp[i,2] = self.sorted_points[i,1]
 
-            ii = int(i +1)
-
+        for i in range(1,n):
             # the following line calculates the distance between neighbouring points along the surface
-            tmp[ii,3] = np.sqrt((tmp[ii,1]-tmp[i,1])**2 + (tmp[ii,2]-tmp[i,2])**2)
+            tmp[i,3] = np.sqrt((tmp[i,1]-tmp[i-1,1])**2 + (tmp[i,2]-tmp[i-1,2])**2)
             # cumulative curvilinear coordinate:
-            tmp[ii,4] = tmp[i,4] + tmp[ii,3]
+            tmp[i,4] = tmp[i-1,4] + tmp[i,3]
+
         # non-dimensional cumulative curvilinear coordianate:
         tmp[:,5] = tmp[:,4]/tmp[n-1,4]
+
         for j in range(sc):
             jmin = int(j - 1)
             jmax = int(j + 1)
@@ -189,6 +193,7 @@ class Profile(object):
             if (diffmax < 0):
                 diffmax = diffmax + 1
                 smax    = smax + 1
+
             for i in range(n):
                 s = tmp[i,5]
                 if (s - smin > 1.):
@@ -197,12 +202,17 @@ class Profile(object):
                     s = s + 1.
                 if (s >= smin) and (s < scenter):
                     # first half of HH bump function on control point j starting from zero point on point j-1
-                    tmp[i,5+j] = amp*(np.sin(.5*np.pi*(s-smin)/diffmin))**t2
-                if (s >= scenter) and (s<= smax):
+                    tmp[i,6+j] = amp*(np.sin(.5*np.pi*(s-smin)/diffmin))**t2
+                elif (s >= scenter) and (s<= smax):
                     # second half of the HH bump function on the control point j reaching zero on point j+1
-                    tmp[i,5+j] = amp*(np.sin(.5*np.pi*(smax-s)/diffmax))**t2
+                    tmp[i,6+j] = amp*(np.sin(.5*np.pi*(smax-s)/diffmax))**t2
                 else:
-                    tmp[i,5] = 0.
+                    tmp[i,6+j] = 0.
+
+        #for i in range(1,n):
+            #print tmp[i,0], tmp[i,1], tmp[i,2], tmp[i,3], tmp[i,4], tmp[i,5], tmp[i,6], tmp[i,7], tmp[i,8], tmp[i,9]
+        #print 'Done printing curvilinear coordinates'
+
 
         for j in range(sc):
             for i in range(n):
@@ -225,7 +235,7 @@ class Profile(object):
                 #
                 M = -Dx/Dy
                 a = np.arctan(M)
-                d = tmp[i,5+j]
+                d = tmp[i,6+j]
                 if (Dx>0 and Dy<0):
                     # first quarter
                     xsign = np.sign(b[j,1])
@@ -243,35 +253,28 @@ class Profile(object):
                     xsign = -np.sign(b[j,1])
                     ysign = -xsign
                 #print 'to verify: from line 408 of apply_bump method, xsign and ysign should be stored', xsign, ysign # ok --> print values to output
-                tmp[i,6+sc] = tmp[i,6+sc]+ xsign*(abs(d*np.cos(np.arctan(M))))
+                tmp[i,6+sc] = tmp[i,6+sc]+ xsign*(abs(d*np.cos(np.arctan(M)))) 
                 tmp[i,7+sc] = tmp[i,7+sc]+ ysign*(abs(d*np.sin(np.arctan(M))))
+                #print i, tmp[i,6+sc], tmp[i,7+sc]
                 #print 'from line 411 of apply_bump method: the ith element inside the matrix is', tmp[i,7+sc]
+
         tmp[:,8+sc]=tmp[:,6+sc] + tmp[:,1]
         tmp[:,9+sc]=tmp[:,7+sc] + tmp[:,2]
         
-        # ----------------------------------------------------------------#
-        # output section: which lines should be exported?
-        # ----------------------------------------------------------------#
-        #a  = (np.array([tmp[:,0]]).T)
-        a = list()
-        for i in range(len(tmp)):
-            #a[i] = str(int(a[i]))
-            a.append(str(int(tmp[i,0])))
-            #print 'from for statement: the ith element of a is', a[i]
-        a = np.array([a]).T
-        #print 'len of a:', len(a)
-        #print 'the size of a is:', a.shape
-        b = np.array([tmp[:,8+sc]]).T
-        #print 'len of b:', len(b)
-        c = np.array([tmp[:,9+sc]]).T
-        sp = np.hstack((a, b, c))
-        #print sp
-        #print 'the type of the final matris is :' , type(sp)
+        #for i in range(1,n):
+        #    print tmp[i,0], tmp[i,1], tmp[i,2], tmp[i,3], tmp[i,4], tmp[i,5], tmp[i,6], tmp[i,7], tmp[i,8], tmp[i,9], tmp[i,10], tmp[i,11], tmp[i,12], tmp[i,13]
+        #print 'Done printing curvilinear coordinates'
 
+
+        self.deformed_points=np.hstack((np.array([tmp[:,8+sc]]).T, np.array([tmp[:,9+sc]]).T))    
+        #sp = np.hstack((self.sorted_indices,  np.array([tmp[:,8+sc]]).T, np.array([tmp[:,9+sc]]).T))   
+
+        """
         with open('apply_bump_0.txt','w') as first:
-            first.write(str(sp))
+            #first.write(str(sp))
+            first.write(str(self.sorted_indices))
         with open('apply_bump_0.txt','r') as first:
-            with open('appy_bump.txt','w') as sec:
+            with open('apply_bump.txt','w') as sec:
                 data = first.read()
                 data = data.replace("[","")
                 data = data.replace("]","")
@@ -286,16 +289,23 @@ class Profile(object):
         #print 'the lenght of tmp matrix is:', tmp.shape
         return tmp
         """
-        #print 'end from applybump'
-        # part for saving the results inside a sub-directory.                
-        description='The output of this method is represented by the set of files bump_new.txt (which contains the matrix of applied bumps) and the files TMP.dat (the complete set of coordinates, applied bump and non-dimensional curvilinear coordinate) and surface_positions.dat (which contains the new coordinates X,Y of the blade surface)'
-        involved_outputs= np.array(['TMP.dat', 'surface_positions.dat'])   #list()
-        #for i in range(2):
-        #file_ith = str('-r CONFIG'+str(i)) 
-        #involved_outputs.append(file_ith)
-        #print 'the ith name is:', involved_outputs[i]
+
+
+    def ExportDeformed(self,filename=None):
+        if (filename == None):
+            filename='surface_positions.dat'
+
+        with open('sorted_positions.dat','w') as first:
+            for i in range(len(self.sorted_indices)):
+                first.write("%d %f %f \n" % (self.sorted_indices[i], self.sorted_points[i,0], self.sorted_points[i,1]))
+
+        with open(filename,'w') as first:
+            for i in range(len(self.sorted_indices)):
+                first.write("%d %f %f \n" % (self.sorted_indices[i], self.deformed_points[i,0], self.deformed_points[i,1]))
+        
+        description='The output of this method is represented by the set of files bump_new.txt (which contains the matrix of applied bumps) and the files TMP.dat (the complete set of coordinates, applied bump and non-dimensional curvilinear coordinate) and '+filename+' (which contains the new coordinates X,Y of the blade surface)'
+        involved_outputs= np.array([filename])   #list()
         invoked_method = 'ApplyBump'
         collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
         collection.Collect()
-
 
