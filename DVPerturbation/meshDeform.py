@@ -17,6 +17,8 @@ class MeshDeform(object):
     def __init__(self, mesh_name):
         self.mesh_name = mesh_name
         self.class_name = 'MeshDeform'
+        self.indices=None
+        self.points=None
         os.system("mkdir "+str(self.class_name+"_OUTPUTs"))
     
     # methods
@@ -142,7 +144,7 @@ class MeshDeform(object):
             print 'coords', coord[int(blade_id_storage[j]),0], blade_id_storage[j]
             nindex=int(blade_id_storage[j])#-1
             if (coord[nindex,0] == blade_id_storage[j]):
-                sort_blade_I.append(coord[nindex,0])
+                sort_blade_I.append(int(coord[nindex,0]))
                 sort_blade_X.append(round(Decimal(coord[nindex,1]),6))
                 sort_blade_Y.append(round(Decimal(coord[nindex,2]),6))
                 sort_blade_Z.append(round(Decimal(coord[nindex,3]),6))
@@ -150,7 +152,7 @@ class MeshDeform(object):
                 print 'I am inside this'
                 for i in range(len(coord)):
                     if coord[i,0] == blade_id_storage[j]:
-                        sort_blade_I.append(coord[i,0])
+                        sort_blade_I.append(int(coord[i,0]))
                         sort_blade_X.append(round(Decimal(coord[i,1]),6))
                         sort_blade_Y.append(round(Decimal(coord[i,2]),6))
 		        sort_blade_Z.append(round(Decimal(coord[i,3]),6))
@@ -172,7 +174,10 @@ class MeshDeform(object):
         #    ii = ii[::-1]
 
         matrix = np.hstack((ii,xx,yy,zz))
+        self.indices=np.array([sort_blade_I]).T
+        self.points=np.hstack((xx, yy,zz))
 
+        
         with open('sorted_blade.txt', 'w') as blade:
             blade.write(str(matrix))
 
@@ -716,7 +721,7 @@ class MeshDeform(object):
 
       """ the aim of this section is to prepare a mesh file with a su2 format:
           the input 'old_mesh' will provide two main bloks inside the final 
-          mesh; the input 'corrct' will provide the block between NPOIN marker
+          mesh; the input 'correct' will provide the block between NPOIN marker
           and NELEM marker.
       """
       mesh_old = self.mesh_name 
