@@ -16,7 +16,10 @@ class MeshDeform(object):
     
     def __init__(self, mesh_name):
         self.mesh_name = mesh_name
+
         self.class_name = 'MeshDeform'
+        obj = CollectResults(class_name=self.class_name)
+        obj.CheckWritingDir()        
         self.indices=None
         self.points=None
         os.system("mkdir "+str(self.class_name+"_OUTPUTs"))
@@ -81,7 +84,7 @@ class MeshDeform(object):
                         if elem[int(k+1)] not in blade_id_storage:
                             #print 'i am doing the storage of this element:', elem[int(k+1)]
                             blade_id_storage.append(elem[int(k+1)])
-        np.set_printoptions(threshold=np.nan)
+        np.set_printoptions(threshold=np.sys.maxsize)
         """ PART 3  
             check of mesh nodes (total number!)
         """
@@ -105,104 +108,112 @@ class MeshDeform(object):
  
         #print 'the original list is:',start_node
         indx  =  (np.array(start_node))
-        indx  =  int(indx) # INDEX OF LIMITS IN WHICH THE FIRST LINE TO BE READ IS STORED.
+        print 'from the line 108 of the class: the index array is :', indx, 'it should be a single value for each ZONE'
+        #indx  =  int(indx) # INDEX OF LIMITS IN WHICH THE FIRST LINE TO BE READ IS STORED.
         #print 'cast operation over index:', indx
-        start = limits[indx]
+        # added on the 10th of february: adapt for NZONE different from 1:
+        # indx has more than one element.
+        for k in range(len(indx)):
+            start = limits[int(indx[k])]
 
-        print 'the mesh will be read for indexes bigger than (vim index)', start+1
-        print 'limits:', limits
-        print 'the last line (index of vim ) will be smaller than:', (limits[2]+2)
-        for j in range(len(row)):    
-            if (j > start) and (j < (limits[2]+1)):
-               elem = row[j].split()
-               X.append( elem[0])
-               Y.append( elem[1])
-	       Z.append( elem[2])
-               last = int(len(elem) - 1)
-               I.append( elem[last]) # here we are in two dimensions! so it will be be the INDEX array !
+            print 'the mesh will be read for indexes bigger than (vim index)', start+1
+            print 'limits:', limits
+            print 'the last line (index of vim ) will be smaller than:', (limits[2]+2)
+            for j in range(len(row)):    
+                if (j > start) and (j < (limits[2]+1)):
+                    elem = row[j].split()
+                    X.append( elem[0])
+                    Y.append( elem[1])
+	            Z.append( elem[2])
+                    last = int(len(elem) - 1)
+                    I.append( elem[last]) # here we are in two dimensions! so it will be be the INDEX array !
 
-        x = np.array([X]).T
-        y = np.array([Y]).T
-        z = np.array([Z]).T
-	i = np.array([I]).T
+            x = np.array([X]).T
+            y = np.array([Y]).T
+            z = np.array([Z]).T
+	    i = np.array([I]).T
 
-        #print 'the final x is:', x                         #ok
-        coord = np.matrix(np.hstack((i,x,y,z)))
-        #print 'after stack:', coord                        #ok
-        #print 'the size of coordinates is:', (coord.shape) #ok
+            #print 'the final x is:', x                         #ok
+            coord = np.matrix(np.hstack((i,x,y,z)))
+            #print 'after stack:', coord                        #ok
+            #print 'the size of coordinates is:', (coord.shape) #ok
 
-        """ PART 4 :
+            """ PART 4 :
             comparison between index of blade and index of total nodes
-        """ 
-        sort_blade_X  = list()
-        sort_blade_Y  = list()
-        sort_blade_I  = list()
-	sort_blade_Z  = list()
+            """ 
+            sort_blade_X  = list()
+            sort_blade_Y  = list()
+            sort_blade_I  = list()
+	    sort_blade_Z  = list()
 
-        for j in range(len(blade_id_storage)):
-            print blade_id_storage[j]
-            print 'coords', coord[int(blade_id_storage[j]),0], blade_id_storage[j]
-            nindex=int(blade_id_storage[j])#-1
-            if (coord[nindex,0] == blade_id_storage[j]):
-                sort_blade_I.append(int(coord[nindex,0]))
-                sort_blade_X.append(round(Decimal(coord[nindex,1]),6))
-                sort_blade_Y.append(round(Decimal(coord[nindex,2]),6))
-                sort_blade_Z.append(round(Decimal(coord[nindex,3]),6))
-            else:
-                print 'I am inside this'
-                for i in range(len(coord)):
-                    if coord[i,0] == blade_id_storage[j]:
-                        sort_blade_I.append(int(coord[i,0]))
-                        sort_blade_X.append(round(Decimal(coord[i,1]),6))
-                        sort_blade_Y.append(round(Decimal(coord[i,2]),6))
-		        sort_blade_Z.append(round(Decimal(coord[i,3]),6))
+            for j in range(len(blade_id_storage)):
+                #print blade_id_storage[j]
+                #print 'coords', coord[int(blade_id_storage[j]),0], blade_id_storage[j]
+                nindex=int(blade_id_storage[j])#-1
+                if (coord[nindex,0] == blade_id_storage[j]):
+                    sort_blade_I.append(int(coord[nindex,0]))
+                    sort_blade_X.append(round(Decimal(coord[nindex,1]),6))
+                    sort_blade_Y.append(round(Decimal(coord[nindex,2]),6))
+                    sort_blade_Z.append(round(Decimal(coord[nindex,3]),6))
+                else:
+                    print 'I am inside this'
+                    for i in range(len(coord)):
+                        if coord[i,0] == blade_id_storage[j]:
+                            sort_blade_I.append(int(coord[i,0]))
+                            sort_blade_X.append(round(Decimal(coord[i,1]),6))
+                            sort_blade_Y.append(round(Decimal(coord[i,2]),6))
+		            sort_blade_Z.append(round(Decimal(coord[i,3]),6))
 
 
-        """ PART 5:
+            """ PART 5:
             storage of the blade coordinates inside an external file
-        """
+            """
 
-        xx = np.array([sort_blade_X]).T
-        yy = np.array([sort_blade_Y]).T
-	zz = np.array([sort_blade_Z]).T
-        ii = np.array([sort_blade_I]).T
-        #--------------------------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # to be implemented only for 2D cases!
-        #if float(yy[1,0]) < float(yy[0,0]):
-        #    xx = xx[::-1]
-        #    yy = yy[::-1]
-        #    ii = ii[::-1]
+            xx = np.array([sort_blade_X]).T
+            yy = np.array([sort_blade_Y]).T
+	    zz = np.array([sort_blade_Z]).T
+            ii = np.array([sort_blade_I]).T
+            #--------------------------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # to be implemented only for 2D cases!
+            #if float(yy[1,0]) < float(yy[0,0]):
+            #    xx = xx[::-1]
+            #    yy = yy[::-1]
+            #    ii = ii[::-1]
 
-        matrix = np.hstack((ii,xx,yy,zz))
-        self.indices=np.array([sort_blade_I]).T
-        self.points=np.hstack((xx, yy,zz))
+            matrix = np.hstack((ii,xx,yy,zz))
+            self.indices=np.array([sort_blade_I]).T
+            self.points=np.hstack((xx, yy,zz))
 
         
-        with open('sorted_blade.txt', 'w') as blade:
-            blade.write(str(matrix))
+            with open('sorted_blade_'+str(k)+'.txt', 'w') as blade:
+                blade.write(str(matrix))
 
-        with open('sorted_blade.txt', 'r') as r:
-            with open('blade_points.txt', 'w') as w:
-                data = r.read()
-                data = data.replace("'", "")
-                data = data.replace("]", "")
-                data = data.replace("[", "")
-                w.write(data)
-        os.system('rm sorted_blade.txt')
-        print '--------------------------------------------------------------'
+            with open('sorted_blade_'+str(k)+'.txt', 'r') as r:
+                with open('blade_points_'+str(k)+'.txt', 'w') as w:
+                    data = r.read()
+                    data = data.replace("'", "")
+                    data = data.replace("]", "")
+                    data = data.replace("[", "")
+                    w.write(data)
+            os.system('rm sorted_blade_'+str(k)+'.txt')
+            print '--------------------------------------------------------------'
         
 
         # part for saving the results inside a sub-directory.                
         description=' The output of the method is the file blade_points.txt which contains the coordinate of the blade, with the same order specified inside the original mesh file with SU2 format.'
-        involved_outputs=np.array(['blade_points.txt'])
-        #for i in range(5):
-        #file_ith = str('-r CONFIG'+str(i)) 
-        #involved_outputs.append(file_ith)
+        #involved_outputs='blade_points_'+k+'.txt'
+        involved_outputs = list()
+        for i in range(len(indx)):
+            file_ith = str('blade_points_'+str(i)+'.txt') 
+            involved_outputs.append(file_ith)
         #print 'the ith name is:', involved_outputs[i]
         invoked_method = 'ExtractSurface'
         collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
         collection.Collect()
-        return matrix
+        global_res = list()
+        global_res.append(matrix)
+        #return matrix
+        return global_res
 
 
     def TransformMesh(self, surface, scale=None, translate=None, rotate=None):
@@ -341,7 +352,7 @@ class MeshDeform(object):
         blade_from_le = np.vstack((sorted_blade1, sorted_blade2))
 
         ##print 'length of sorted_blade:', len(sorted_blade)
-        np.set_printoptions(threshold=np.nan)
+        np.set_printoptions(threshold=np.sys.maxsize)
         with open('blade_from_le_0.txt', 'w') as b :
             b.write(str(blade_from_le))
         with open('blade_from_le_0.txt', 'r') as r:
@@ -644,8 +655,8 @@ class MeshDeform(object):
         z = np.array([Z]).T
                                                                                                               
         coord = np.matrix(np.hstack((z,x,y)))
-        np.set_printoptions(threshold=np.nan)
-
+        #np.set_printoptions(threshold=np.sys.maxsize)
+        np.set_printoptions(thereshold=sys.maxsize)
         with open('draft_verify.txt', 'w') as draft:
                 draft.write(str(coord))
         with open('draft_verify.txt', 'r') as draft:
