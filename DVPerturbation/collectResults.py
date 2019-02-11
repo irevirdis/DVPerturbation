@@ -3,6 +3,7 @@
 """
 import numpy as np
 import os
+import datetime
 
 """ This class takes as inputs:
     
@@ -62,6 +63,16 @@ class CollectResults(object) :
             collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
             collection.Collect()
         """
+    def CheckWritingDir(self):
+        """ This method has been writen to control the directory before a directory would be created
+        """
+        now = datetime.datetime.now()
+        hour = str(str(now.hour)+str(now.minute)+str(now.second))
+        list_of_files =  [f for f in os.listdir('.')]
+        if str(self.class_name+'_OUTPUTs') in list_of_files:
+            os.system('mv '+str(self.class_name+'_OUTPUTs')+' '+self.class_name+'_OUTPUTs'+str(hour))
+        #print 'from the collect class: the list of files is:', list_of_files
+        #print 'and its type is:', type(list_of_files)
 
 
 
