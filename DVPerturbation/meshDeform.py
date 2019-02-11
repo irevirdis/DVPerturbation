@@ -55,10 +55,17 @@ class MeshDeform(object):
         """
         for j in range(len(row)):
 
-            if 'MARKER_TAG' and surface in row[j]:
+            if 'MARKER_TAG' and surface in row[j].split():
                 start_blade_index.append(j)                   # start read the blade index --> 
                 integer = int(filter(str.isdigit, row[j+1]))  # how many index are there into the blade mesh?
                 number_blade.append(integer)                  # storage of the integer into an empty list
+                ## added on the 11th of Feb: check the presence of a word inside another one-----------#
+                ## the following lines are an heuristics to check the structure of the row:
+                print 'from line 63 of meshDeform: I found the wors inside the row:', row[j]
+                elem = row[j].split()
+                for t in range(len(elem)):
+                    print 'from the heuristic: the element ',t,' is:', elem[t]
+                #--------------------------------------HEURISTIC ---------------------------------------#
     
         start = np.array(start_blade_index)
         start = int(start+1 )
