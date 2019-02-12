@@ -816,9 +816,18 @@ class MeshDeform(object):
         mesh_file = [x for x in open(self.mesh_name).readlines()]
         for i in range(len(mesh_file)):
             if 'NPOIN' in mesh_file[i]:
-                dimension.append(int(len(mesh_file[i+1].split()) -1 ))
+                dimension.append(int(len(mesh_file[i+1].split()) -1 ))        
                 index.append(i)
-                index.append(int(filter(str.isdigit, mesh_file[i])))
+                if len(mesh_file[i].split()) == 2:
+                    print 'length equal to 2'
+                    index.append(int(filter(str.isdigit, mesh_file[i])))
+                if len(mesh_file[i].split()) == 3:
+                    print 'length of the NPOIN row equal to 3'
+                    elem = mesh_file[i].split()
+                    index.append(int(elem[1]))
+                #else:
+                #    print 'there is a problem with the integer near the word NPOIN'
+                print 'from line 831: the array index is:', index
         nzone = int(len(index)/2)
         for j in range(nzone):
             read_the_index_1 = int(j*2)
@@ -842,7 +851,7 @@ class MeshDeform(object):
                     if dimension[0] == 2:
                         w.write("%f %f \n" % (matrix[i,0], matrix[i,1]))
                     else:
-                        w.write("%f %f \n" % (matrix[i,0], matrix[i,1], matrix[i,2]))
+                        w.write("%f %f %f \n" % (matrix[i,0], matrix[i,1], matrix[i,2]))
         description = 'the output of this method is represented by the set of the points inside each NPOIN zone of the original mesh'
         involved_outputs = list()
         for i in range(nzone):
