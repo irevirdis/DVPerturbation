@@ -807,3 +807,49 @@ class MeshDeform(object):
       collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
       collection.Collect()
 
+
+    def ExtractMesh(self):
+        """ Method for the external export of the entire mesh (set of points from NPOIN zone)
+        """
+        dimension = list()
+        index = list()
+        mesh_file = [x for x in open(self.mesh_name).readlines()]
+        for i in range(len(mesh_file)):
+            if 'NPOIN' in mesh_file[i]:
+                dimension.append(int(len(mesh_file[i+1].split()) -1 ))
+                index.append(i)
+                index.append(int(filter(str.isdigit, mesh_file[i])))
+        nzone = int(len(index)/2)
+        for j in range(nzone):
+            read_the_index_1 = int(j*2)
+            read_the_index_2 = int(read_the_index_1 +1)
+            if dimension[0] == 2:
+                matrix = np.zeros((int(index[read_the_index_2]), 2))
+            else:
+                matrix = np.zeros((int(index[read_the_index_2]), 3))
+
+            for i in range(len(mesh_file)):
+                if (i>index[read_the_index_1]) and (i<=(index[read_the_index_2] + index[read_the_index_1])):
+                    position = int(i - index[read_the_index_1] -1)
+                    elem = mesh_file[i].split()
+                    matrix[position,0] = elem[0]
+                    matrix[position,1] = elem[1]
+                    if dimension[0] == 3 :
+                        matrix[position,2] = elem[2]
+            file_name = str('mesh_zone_'+str(j)+'.txt')
+            with open(file_name, 'w') as w :
+                for i in range(len(matrix)):
+                    if dimension[0] == 2:
+                        w.write("%f %f \n" % (matrix[i,0], matrix[i,1]))
+                    else:
+                        w.write("%f %f \n" % (matrix[i,0], matrix[i,1], matrix[i,2]))
+        description = 'the output of this method is represented by the set of the points inside each NPOIN zone of the original mesh'
+        involved_outputs = list()
+        for i in range(nzone):
+            to_save = str('mesh_zone_'+str(i)+'.txt')
+            involved_outputs.append(to_save)
+        invoked_method = 'ExtractMesh'
+        collection = CollectResults(class_name = self.class_name, involved_outputs = involved_outputs, invoked_method = invoked_method, description= description)
+        collection.Collect()
+
+
