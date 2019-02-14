@@ -15,14 +15,14 @@ class Profile(object):
     # attributes of the class
     
     def __init__(self, points=None, indices=None):
-        self.class_name = 'MeshDeform'
+        self.class_name = 'Profile'
         self.points = points
         if (indices != None):
             self.indices=indices
         else:
             self.indices=np.array([[x for x in range(len(points))]]).T
             
-        os.system("mkdir "+str(self.class_name+"_OUTPUTs"))
+        #os.system("mkdir "+str(self.class_name+"_OUTPUTs"))
     
     # methods
     
@@ -308,4 +308,104 @@ class Profile(object):
         invoked_method = 'ApplyBump'
         collection = CollectResults(class_name=self.class_name, involved_outputs=involved_outputs, invoked_method=invoked_method, description=description)
         collection.Collect()
+    
+
+    def Clockwise(self ):
+        """ sort the points clockwise; this method has been written for 2D case;
+            the input index is optional, used when the coordinates are associated
+            to an index into a mesh.
+        """ 
+        matrix = self.points
+        if self.indices is not None:
+            index = self.indices
+        copy_of_index = list()
+        distance  = list()
+        minimum_x = np.min(matrix[:,0])
+        ref_first = list()
+        x = list()
+        y = list()
+
+        for i in range(len(matrix)):
+            x.append(matrix[i,0])
+            if x[i] == minimum_x:
+                ref_first.append(i)
+            y.append(matrix[i,1])
+            if index is not None:
+                copy_of_index.append(index[i])
+        ref_first = int(ref_first[0])
+
+        sort_x = list()
+        sort_y = list()
+        sort_i = list()
+
+        # initialize
+        sort_x.append(x[ref_first])
+        sort_y.append(y[ref_first])
+        if index is not None:
+            sort_i.append(copy_of_index[ref_first])
+        ref_x = x[ref_first]
+        ref_y = y[ref_first]
+        
+        x.pop(ref_first)
+        y.pop(ref_first)
+        
+        time = len(x)
+        #print 'the first value of sort_x is:', sort_x, 'and y:', sort_y
+        for i in range(time):
+            distance = list()            
+            #print 'the list of remaining x:', x
+            #print '--------------------- y:', y
+            #print 'from external loop: the value of time is', i
+            for j in range(time):
+                #print 'from nested loop: time is',  j
+
+                distance.append(np.sqrt((x[j]-ref_x)**2 + (y[j] - ref_y)**2))
+   
+            local_minimum = np.min(distance)
+            idx = distance.index(local_minimum)
+            #print 'the distances are:', distance
+            #print 'the index of the smallest distance is', idx
+            #print 'the present length of x is:', len(x)
+            if len(x) != 0:
+                sort_x.append(x[idx])   
+                sort_y.append(y[idx])
+            
+                # new loop:
+                ref_x = x[idx]
+                ref_y = y[idx]
+
+                distance.pop(idx)
+                #print 'the length of distance is:', len(distance)
+                x.pop(idx)
+                y.pop(idx)
+                if index is not None:
+                    sort_i.append(copy_of_index[idx])
+                    copy_of_index.pop(idx)
+                time = len(x)
+                #print 'the new value of time is:', time
+                if time == 0:
+                    break
+                #print 'end of the nested-----------------------------------------'
+            if time == 0:
+                break
+            #print 'end of the external ------------------------------------------'
+
+        # clockwise:
+        if (sort_x[0] < sort_x[1]):
+            sort_x = sort_x[::-1]
+            sort_y = sort_y[::-1]
+            sort_i = sort_i[::-1]
+
+        #print 'the points are:', sort_x
+        with open('prova.txt', 'w') as w :                  
+            for i in range(len(sort_x)):
+                if sort_i is not None:
+                    w.write(" %f  %f %d \n" % (sort_x[i], sort_y[i], sort_i[i]))               
+                else:
+                    w.write("%f %f \n" % (sort_x[i], sort_y[i]))
+
+            
+        
+
+
 
